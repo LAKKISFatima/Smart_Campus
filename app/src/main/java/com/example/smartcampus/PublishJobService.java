@@ -208,7 +208,8 @@ public class PublishJobService extends JobService {
             NotificationCompat.Builder builder = new NotificationCompat.Builder
                     (this, PRIMARY_CHANNEL_ID)
                     .setContentTitle("Session Reminder")
-                    .setContentText(l.getLongitude() + " Your have session in 5 min!")
+                    .setContentText("You are in session now!" +
+                            "\nYou location ( " + l.getLongitude() + " , " + l.getLatitude() + " ) has been published.")
                     .setContentIntent(contentPendingIntent)
                     .setSmallIcon(R.drawable.ic_job_running)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
