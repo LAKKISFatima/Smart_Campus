@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static java.lang.Thread.sleep;
+
 public class MainActivity extends Activity implements LocationListener {
 
     protected LocationManager locationManager;
@@ -53,11 +55,13 @@ public class MainActivity extends Activity implements LocationListener {
         tv = (TextView) findViewById(R.id.tv1);
         //tvc = (TextView) findViewById(R.id.test);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_BACKGROUND_LOCATION},
                     MY_PERMISSIONS_REQUEST_LOCATION);
             }
 
@@ -77,7 +81,7 @@ public class MainActivity extends Activity implements LocationListener {
 
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
 
-        s = initialize();
+        s = Student.initialize();
 
         try {
             s.WriteXML();
@@ -100,9 +104,9 @@ public class MainActivity extends Activity implements LocationListener {
 
         lv.setAdapter(arrayAdapter);
 
-        MQTTPublisher mP = new MQTTPublisher();
+        MQTTPublisher mP = new MQTTPublisher(this);
         TextView tv2 = findViewById(R.id.tv2);
-        tv2.setText(mP.clientId);
+        tv2.setText("MQTT Client Id: " + mP.clientId);
 
         ///////////////////////////////////////////////////////
 
@@ -120,7 +124,6 @@ public class MainActivity extends Activity implements LocationListener {
             builder.setPeriodic(15 * 60 * 1000, 20 * 1000);
         }
 
-
         if(constraintSet) {
             //Schedule the job and notify the user
             JobInfo myJobInfo = builder.build();
@@ -129,6 +132,13 @@ public class MainActivity extends Activity implements LocationListener {
         }
 
         //mP.start();
+
+        //MQTTPublisher mP = new MQTTPublisher();
+        String message = "Hello, I'am here!";
+
+        //mP.start(message);
+        //Toast.makeText(this, "Message published", Toast.LENGTH_LONG).show();
+
     }
 
     @Override
@@ -161,32 +171,5 @@ public class MainActivity extends Activity implements LocationListener {
 
     }
 
-    public static Student initialize() {
-        ArrayList<Course> c = new ArrayList<Course>();
-
-        ArrayList<Date> dstart = new ArrayList<Date>();
-        dstart.add(new Date(2020, 12, 29, 10, 00));
-        dstart.add(new Date(2020, 12, 31, 8, 0));
-
-        ArrayList<Date> dend = new ArrayList<Date>();
-        dend.add(new Date(2020, 12, 29, 11, 0));
-        dend.add(new Date(2020, 12, 31, 9, 0));
-        Course c1 = new Course("I3300", "DataS", dstart, dend, 33.828470, 33.829086, 35.521337, 35.523058);
-
-        ArrayList<Date> dstart2 = new ArrayList<Date>();
-        dstart2.add(new Date(2020, 12, 28, 23, 30));
-        dstart2.add(new Date(2020, 12, 31, 10, 0));
-
-        ArrayList<Date> dend2 = new ArrayList<Date>();
-        dend2.add(new Date(2020, 12, 29, 13, 0));
-        dend2.add(new Date(2020, 12, 31, 11, 0));
-        Course c2 = new Course("E2200", "Mechanics", dstart2, dend2, 33.825023, 33.825829, 35.520459, 35.521943);
-
-        c.add(c1);
-        c.add(c2);
-
-        return new Student("1234", "Hello", c);
-
-    }
 
 }

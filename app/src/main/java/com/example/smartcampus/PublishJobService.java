@@ -26,6 +26,7 @@ import androidx.core.app.NotificationCompat;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -88,24 +89,32 @@ public class PublishJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
 
-        myStudent = initialize();
+        myStudent = Student.initialize();
 
         boolean haveClassNow = false;
         Course currC = new Course();
-        Date dCurr = new Date();
+        Course c11 = null;
+        Calendar dCurr = Calendar.getInstance();
+        //dCurr.clear();
+        //dCurr.set(2021, 1, 18);
+
+        Calendar dstart = Calendar.getInstance();
         for (int i = 0; i < myStudent.myCourses.size(); i++) {
+            c11 = myStudent.myCourses.get(i);
             for (int j = 0; j < myStudent.myCourses.get(i).start.size(); j++) {
                 if (myStudent.myCourses.get(i).start.get(j).before(dCurr)
-                        && myStudent.myCourses.get(i).end.get(j).after(dCurr)) {
+                       && myStudent.myCourses.get(i).end.get(j).after(dCurr)) {
                     haveClassNow = true;
                     currC = myStudent.myCourses.get(i);
+                    dstart = myStudent.myCourses.get(i).start.get(j);
+                    //dstart = new Date(myStudent.myCourses.get(i).start.get(j).getTime());
                     break;
                 }
 
             }
             if (haveClassNow) break;
         }
-
+        Log.e("testCourse", c11 + "");
         haveClassNow=true;
 
         if (haveClassNow) {
@@ -151,19 +160,24 @@ public class PublishJobService extends JobService {
             //Create the notification channel
             createNotificationChannel(myLocation);
 
-            SimpleDateFormat DateFor = new SimpleDateFormat("dd/MMM/yyyy-HH:mm");
-            String stringDate = DateFor.format(dCurr);
+            //if (MyLocation.isInArea(myLocation, currC.xMin, currC.xMax, currC.yMin, currC.yMax)) {
 
-            MQTTPublisher mP = new MQTTPublisher();
-            String message = "ID:" + myStudent.ID + ";CID:" + currC
-                    + ";inArea:" + MyLocation.isInArea(myLocation, currC.xMin, currC.xMax, currC.yMin, currC.yMax)
-                    + ";Time:" + stringDate;
+                SimpleDateFormat DateFor = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String stringDate = DateFor.format(dstart.getTime());
 
-            mP.start(message);
+                MQTTPublisher mP = new MQTTPublisher(this);
+                String message = "ID:" + myStudent.ID + ";CID:" + currC.code + ";Time:" + stringDate;
 
-            Toast.makeText(this, "Location published" , Toast.LENGTH_LONG).show();
+                mP.start(message);
+
+                String s = "" + mP.clientId;
+                createNotificationChannel(s);
+
+                ///////////////////////////////
+
+                Toast.makeText(this, "Location published", Toast.LENGTH_LONG).show();
+            //}
         }
-
        return true;
     }
 
@@ -220,6 +234,51 @@ public class PublishJobService extends JobService {
         }
     }
 
+    public void createNotificationChannel(String s) {
+
+        // Define notification manager object.
+        mNotifyManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // Notification channels are only available in OREO and higher.
+        // So, add a check on SDK version.
+        if (android.os.Build.VERSION.SDK_INT >=
+                android.os.Build.VERSION_CODES.O) {
+
+            // Create the NotificationChannel with all the parameters.
+            NotificationChannel notificationChannel = new NotificationChannel
+                    (PRIMARY_CHANNEL_ID,
+                            "Job Service notification",
+                            NotificationManager.IMPORTANCE_HIGH);
+
+            notificationChannel.enableLights(true);
+            notificationChannel.setLightColor(Color.RED);
+            notificationChannel.enableVibration(true);
+            notificationChannel.setDescription
+                    ("Notifications from Job Service");
+
+            mNotifyManager.createNotificationChannel(notificationChannel);
+
+            ////////////////////////////////////////////////////////////////////////////
+            //Set up the notification content intent to launch the app when clicked
+            PendingIntent contentPendingIntent = PendingIntent.getActivity
+                    (this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder
+                    (this, PRIMARY_CHANNEL_ID)
+                    .setContentTitle("Session Reminder")
+                    .setContentText(s)
+                    .setContentIntent(contentPendingIntent)
+                    .setSmallIcon(R.drawable.ic_job_running)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL)
+                    .setAutoCancel(true);
+
+            mNotifyManager.notify(0, builder.build());
+        }
+    }
+
+    /*
     public Date findNextDate(){
 
         Course nearestc;
@@ -241,38 +300,11 @@ public class PublishJobService extends JobService {
                 return Long.compare(diff1, diff2);
             }
         });
-        */
+
 
         return dMin;
     }
-
-    public static Student initialize() {
-        ArrayList<Course> c = new ArrayList<Course>();
-
-        ArrayList<Date> dstart = new ArrayList<Date>();
-        dstart.add(new Date(2020, 12, 29, 10, 00));
-        dstart.add(new Date(2020, 12, 31, 8, 0));
-
-        ArrayList<Date> dend = new ArrayList<Date>();
-        dend.add(new Date(2020, 12, 29, 11, 0));
-        dend.add(new Date(2020, 12, 31, 9, 0));
-        Course c1 = new Course("I3300", "DataS", dstart, dend, 33.828470, 33.829086, 35.521337, 35.523058);
-
-        ArrayList<Date> dstart2 = new ArrayList<Date>();
-        dstart2.add(new Date(2020, 12, 28, 23, 30));
-        dstart2.add(new Date(2020, 12, 31, 10, 0));
-
-        ArrayList<Date> dend2 = new ArrayList<Date>();
-        dend2.add(new Date(2020, 12, 29, 13, 0));
-        dend2.add(new Date(2020, 12, 31, 11, 0));
-        Course c2 = new Course("E2200", "Mechanics", dstart2, dend2, 33.825023, 33.825829, 35.520459, 35.521943);
-
-        c.add(c1);
-        c.add(c2);
-
-        return new Student("1234", "Hello", c);
-
-    }
+    */
 
     private void initializeLocationManager() {
         Log.e(TAG, "initializeLocationManager");

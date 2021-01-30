@@ -4,14 +4,16 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 
 public class Course {
 
     public String code;
     public String name;
-    public ArrayList<Date> start = new ArrayList<Date>();
-    public ArrayList<Date> end = new ArrayList<Date>();
+    //public ArrayList<String> SID = new ArrayList<String>();
+    public ArrayList<Calendar> start = new ArrayList<Calendar>();
+    public ArrayList<Calendar> end = new ArrayList<Calendar>();
     public double xMin;
     public double xMax;
     public double yMin;
@@ -20,7 +22,7 @@ public class Course {
     public Course(){
 
     }
-    public Course(String c, String n, ArrayList<Date> s, ArrayList<Date> e,
+    public Course(String c, String n, ArrayList<Calendar> s, ArrayList<Calendar> e,
                   double xMin, double xMax, double yMin, double yMax){
         code=c;
         name=n;
@@ -32,10 +34,10 @@ public class Course {
         this.yMin = yMin;
     }
 
-    public ArrayList<Date> getStart() {
+    public ArrayList<Calendar> getStart() {
         return start;
     }
-    public void setStart(ArrayList<Date> start) {
+    public void setStart(ArrayList<Calendar> start) {
         this.start = start;
     }
 
@@ -53,10 +55,10 @@ public class Course {
         this.name = name;
     }
 
-    public ArrayList<Date> getEnd() {
+    public ArrayList<Calendar> getEnd() {
         return end;
     }
-    public void setEnd(ArrayList<Date> end) {
+    public void setEnd(ArrayList<Calendar> end) {
         this.end = end;
     }
 
@@ -95,7 +97,7 @@ public class Course {
 
         SimpleDateFormat DateFor = new SimpleDateFormat("E HH:mm");
         for (int i=0; i<start.size(); i++) {
-            String stringDate = DateFor.format(start.get(i));
+            String stringDate = DateFor.format(start.get(i).getTime());
             s += stringDate + " ";
         }
 

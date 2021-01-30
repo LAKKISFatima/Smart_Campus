@@ -1,58 +1,96 @@
 package com.example.smartcampus;
 
+import android.content.Context;
 import android.os.Build;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
+import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.*;
 
+import java.io.UnsupportedEncodingException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Collections;
 
 public class MQTTPublisher {
 
-    static String GUID = "742e7aa9-4583-4c4d-9160-6044b8e78e67";
+    //static String GUID = "742e7aa9-4583-4c4d-9160-6044b8e78e67";
     public static final String BROKER_URL = "tcp://broker.mqttdashboard.com:1883";
-    //iot.eclipse.org
-    public static final String TOPIC_MESSAGE = "home/" + GUID;
-    private MqttClient client;
+    public static final String TOPIC_MESSAGE = "LebaneseUniversity/FacultyOfSciences/SmartCampus";
+    public static final String TAG = "MQTT";
+    private MqttAndroidClient client;
     public String clientId;
+    public Context context;
 
-    MQTTPublisher() {
+    MQTTPublisher(Context context) {
 
         //We have to generate a unique Client id.
-        clientId = getMACAddress() + "-pub";
+        //clientId = getMACAddress() + "-pub";
+        clientId = MqttClient.generateClientId();
+        this.context = context;
 
-        try {
-            client = new MqttClient(BROKER_URL, clientId);
-        } catch (MqttException e) {
-            //e.printStackTrace();
-            //System.exit(1);
-        }
+            //client = new MqttClient(BROKER_URL, clientId);
+            client = new MqttAndroidClient(context.getApplicationContext(), BROKER_URL,
+                            clientId);
+
     }
 
     public void start(String message) {
 
-        try {
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setCleanSession(false);
+        //try {
+            //MqttConnectOptions options = new MqttConnectOptions();
+            //options.setCleanSession(false);
             //options.setWill(client.getTopic("home/LWT"), "I'm gone :(".getBytes(), 0, false);
 
-            client.connect(options);
+            //client.connect(options);
+
+            try {
+                IMqttToken token = client.connect();
+                token.setActionCallback(new IMqttActionListener() {
+                    @Override
+                    public void onSuccess(IMqttToken asyncActionToken) {
+                        // We are connected
+                        Log.d(TAG, "onSuccess");
+                        String payload = message;
+                        byte[] encodedPayload = new byte[0];
+                        try {
+                            encodedPayload = payload.getBytes("UTF-8");
+                            MqttMessage mqttMessage = new MqttMessage(encodedPayload);
+                            client.publish(TOPIC_MESSAGE, mqttMessage);
+                            Toast.makeText(context, "Message published", Toast.LENGTH_LONG).show();
+                        } catch (MqttException | UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                        // Something went wrong e.g. connection timeout or firewall problems
+                        Log.d(TAG, "onFailure");
+
+                    }
+                });
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+
+
 
             //Publish data forever
-            publishMessage(message);
+            //publishMessage(message);
 
-        } catch (MqttException e) {
+        /*} catch (MqttException e) {
             e.printStackTrace();
             System.exit(1);
-        }
+        }*/
     }
 
     void publishMessage(String s) throws MqttException {
-        final MqttTopic messageTopic = client.getTopic(TOPIC_MESSAGE);
-        messageTopic.publish(new MqttMessage(s.getBytes()));
+        //final MqttTopic messageTopic = client.getTopic(TOPIC_MESSAGE);
+        //messageTopic.publish(new MqttMessage(s.getBytes()));
 
         //System.out.println("Published data. Topic1: " + brightnessTopic.getName() + "   Message: " + brigthness);
     }
